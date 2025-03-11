@@ -104,11 +104,6 @@ dotnet test
 
 ## **📌 Next Steps & Improvements**
 🔹 Implement **automatic reconnection** if the vehicle comes back online.  
-🔹 Integrate **Kafka or RabbitMQ** for event-driven message processing.  
 🔹 Add **TLS/SSL encryption** for secure communication.  
 
 ---
-
-## **📞 Support**
-For any issues or feature requests, please open an **issue on GitHub** or contact the development team.
-
