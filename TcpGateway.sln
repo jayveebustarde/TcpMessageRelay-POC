@@ -9,13 +9,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpLibrary", "src\tcplibrar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpMessageRelay", "src\TcpMessageRelay\TcpMessageRelay.csproj", "{D55C75AD-AE15-4955-84F5-AFBC6ACA4582}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D03CBB62-08DB-47DC-92ED-F2AB7D4EC281}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcpGateway.Tests", "TcpGateway.Tests\TcpGateway.Tests.csproj", "{4C544FF6-C0AB-444E-AAC8-0E06D52E8FA1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{281F24DA-91AF-40D7-A9BC-AA42572F4EBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -26,9 +27,17 @@ Global
 		{D55C75AD-AE15-4955-84F5-AFBC6ACA4582}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D55C75AD-AE15-4955-84F5-AFBC6ACA4582}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D55C75AD-AE15-4955-84F5-AFBC6ACA4582}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C544FF6-C0AB-444E-AAC8-0E06D52E8FA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C544FF6-C0AB-444E-AAC8-0E06D52E8FA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C544FF6-C0AB-444E-AAC8-0E06D52E8FA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C544FF6-C0AB-444E-AAC8-0E06D52E8FA1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{281F24DA-91AF-40D7-A9BC-AA42572F4EBA} = {80FE42FC-AA49-4437-ABFB-1446F8E3C926}
 		{D55C75AD-AE15-4955-84F5-AFBC6ACA4582} = {80FE42FC-AA49-4437-ABFB-1446F8E3C926}
+		{4C544FF6-C0AB-444E-AAC8-0E06D52E8FA1} = {D03CBB62-08DB-47DC-92ED-F2AB7D4EC281}
 	EndGlobalSection
 EndGlobal
