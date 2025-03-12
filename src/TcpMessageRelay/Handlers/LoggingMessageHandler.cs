@@ -13,7 +13,7 @@ public class LoggingMessageHandler : IEventHandler<string>
 
     public async Task HandleAsync(string message)
     {
-        _logger.LogInformation($"📝 Logging message: {message}");
+        _logger.LogInformation($"Logging message: {message}");
         await Task.CompletedTask;
     }
 }

@@ -1,8 +1,8 @@
 ﻿public class ForwardingMessageHandler : IEventHandler<string>
 {
-    private readonly ITcpClientService _backendClient;
+    private readonly IClientService _backendClient;
 
-    public ForwardingMessageHandler(ITcpClientService backendClient)
+    public ForwardingMessageHandler(IClientService backendClient)
     {
         _backendClient = backendClient;
     }
