@@ -5,14 +5,14 @@ namespace TcpGateway.Tests
 {
     public class TcpMessageRelayTests
     {
-        private readonly Mock<ITcpClientService> _mockVehicleClient;
-        private readonly Mock<ITcpClientService> _mockBackendClient;
+        private readonly Mock<IClientService> _mockVehicleClient;
+        private readonly Mock<IClientService> _mockBackendClient;
         private readonly TcpMessageRelay _relay;
 
         public TcpMessageRelayTests()
         {
-            _mockVehicleClient = new Mock<ITcpClientService>();
-            _mockBackendClient = new Mock<ITcpClientService>();
+            _mockVehicleClient = new Mock<IClientService>();
+            _mockBackendClient = new Mock<IClientService>();
 
             _relay = new TcpMessageRelay(_mockVehicleClient.Object, _mockBackendClient.Object, new NullLogger<TcpMessageRelay>());
         }
