@@ -6,7 +6,7 @@ public interface IClientService
     /// <summary>
     /// Event raised when a message is received from the server.
     /// </summary>
-    event EventHandler<string> MessageReceived;
+    event EventHandler<byte[]> MessageReceived;
 
     /// <summary>
     /// Event raised when the client is disconnected from the server.
@@ -28,7 +28,14 @@ public interface IClientService
     /// <summary>
     /// Send a message to the server.
     /// </summary>
-    /// <param name="message"></param>
+    /// <param name="message">The string message input.</param>
     /// <returns>Asynchronous task of the action</returns>
     Task SendMessageAsync(string message);
+
+    /// <summary>
+    /// Send a message to the server.
+    /// </summary>
+    /// <param name="data">The byte array data input.</param>
+    /// <returns>Asynchronous task of the action</returns>
+    Task SendMessageAsync(byte[] data);
 }

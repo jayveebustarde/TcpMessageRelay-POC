@@ -16,7 +16,7 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
     private Socket _socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     private CancellationTokenSource? _cts;
 
-    public event EventHandler<string>? MessageReceived;
+    public event EventHandler<byte[]>? MessageReceived;
     public event EventHandler<string>? OnDisconnect;
 
     /// <inheritdoc />
@@ -60,36 +60,51 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
     }
 
     /// <inheritdoc />
-    public async Task SendMessageAsync(string message)
+    public async Task SendMessageAsync(string message) => 
+        await SendMessageAsync(Encoding.UTF8.GetBytes(message));
+
+    public async Task SendMessageAsync(byte[] data)
     {
-        if (_socket.Connected)
-        {
-            byte[] data = Encoding.UTF8.GetBytes(message + "\n");
-            await _socket.SendAsync(new ArraySegment<byte>(data), SocketFlags.None);
-            _logger.LogInformation($"Sent: {message}");
-        }
-        else
+        if (!_socket.Connected)
         {
             _logger.LogWarning("SendMessage failed: Not connected.");
+            return;
         }
+
+        byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
+
+        byte[] fullMessage = new byte[lengthPrefix.Length + data.Length];
+        Buffer.BlockCopy(lengthPrefix, 0, fullMessage, 0, lengthPrefix.Length);
+        Buffer.BlockCopy(data, 0, fullMessage, lengthPrefix.Length, data.Length);
+
+        await _socket.SendAsync(new ArraySegment<byte>(fullMessage), SocketFlags.None);
+        _logger.LogInformation($"Sent {data.Length} bytes.");
     }
 
     private async Task ReceiveMessagesAsync(CancellationToken cancellationToken)
     {
-        byte[] buffer = new byte[1024];
+        byte[] lengthBuffer = new byte[4]; // 4 bytes for message length prefix
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                int bytesRead = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), SocketFlags.None);
-                if (bytesRead == 0) break;
+                int lengthBytesRead = await _socket.ReceiveAsync(new ArraySegment<byte>(lengthBuffer), SocketFlags.None);
+                if (lengthBytesRead == 0) break;
 
-                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
+                int messageLength = BitConverter.ToInt32(lengthBuffer, 0);
+                byte[] messageBuffer = new byte[messageLength];
+                int totalBytesRead = 0;
 
-                // Raise Event for Subscribers
-                MessageReceived?.Invoke(this, message);
+                while (totalBytesRead < messageLength)
+                {
+                    int bytesRead = await _socket.ReceiveAsync(new ArraySegment<byte>(messageBuffer, totalBytesRead, messageLength - totalBytesRead), SocketFlags.None);
+                    if (bytesRead == 0) break;
+                    totalBytesRead += bytesRead;
+                }
 
-                _logger.LogInformation($"Received: {message}");
+                // Fire event with raw bytes instead of string
+                MessageReceived?.Invoke(this, messageBuffer);
+                _logger.LogInformation($"Received {messageLength} bytes.");
             }
             catch (Exception ex)
             {
@@ -100,4 +115,5 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
         _logger.LogWarning("Disconnected from server.");
         await DisconnectAsync();
     }
+
 }

@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
+﻿using System.Net.Sockets;
+using System.Text;
+using Moq;
+using Microsoft.Extensions.Logging.Abstractions;
 using TcpLibrary.Config;
 
 public class TcpClientServiceTests
@@ -46,5 +49,43 @@ public class TcpClientServiceTests
 
         Assert.True(true); // No exception means success
         await tcpClient.DisconnectAsync();
+    }
+
+    [Fact]
+    public async Task SendMessageAsync_ShouldFail_WhenNotConnected()
+    {
+        var mockLogger = new NullLogger<TcpClientService>();
+        var tcpClient = new TcpClientService(_config, mockLogger);
+
+        await Assert.ThrowsAsync<SocketException>(async () => await tcpClient.SendMessageAsync("Hello, TCP!"));
+    }
+
+    [Fact]
+    public async Task RelayMessage_ShouldForwardMessage_WhenConnected()
+    {
+        var mockLogger = new NullLogger<TcpClientService>();
+        var mockTargetClient = new Mock<IClientService>();
+        mockTargetClient.Setup(tc => tc.SendMessageAsync(It.IsAny<byte[]>())).Returns(Task.CompletedTask);
+
+        var tcpClient = new TcpClientService(_config, mockLogger);
+        await tcpClient.ConnectAsync();
+        byte[] testMessage = Encoding.UTF8.GetBytes("Test Relay Message");
+
+        await tcpClient.SendMessageAsync(testMessage);
+        mockTargetClient.Verify(tc => tc.SendMessageAsync(It.IsAny<byte[]>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RelayMessage_ShouldNotForward_WhenNotConnected()
+    {
+        var mockLogger = new NullLogger<TcpClientService>();
+        var mockTargetClient = new Mock<IClientService>();
+        mockTargetClient.Setup(tc => tc.SendMessageAsync(It.IsAny<byte[]>())).Returns(Task.CompletedTask);
+
+        var tcpClient = new TcpClientService(_config, mockLogger);
+        byte[] testMessage = Encoding.UTF8.GetBytes("Test Relay Message");
+
+        await tcpClient.SendMessageAsync(testMessage);
+        mockTargetClient.Verify(tc => tc.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
     }
 }

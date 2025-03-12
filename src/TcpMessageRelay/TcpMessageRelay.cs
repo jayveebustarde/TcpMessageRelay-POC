@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -72,7 +73,7 @@ public class TcpMessageRelay : ITcpMessageRelay
     /// <summary>
     /// Relays messages from one connection to the other.
     /// </summary>
-    private async Task RelayMessage(string message, IClientService targetClient)
+    private async Task RelayMessage(byte[] message, IClientService targetClient)
     {
         if (!_isRelayActive)
         {
@@ -80,7 +81,7 @@ public class TcpMessageRelay : ITcpMessageRelay
             return;
         }
 
-        _logger.LogInformation($"Relaying message: {message}");
+        _logger.LogInformation($"Relaying {message.Length} bytes.");
         await targetClient.SendMessageAsync(message);
     }
 }
