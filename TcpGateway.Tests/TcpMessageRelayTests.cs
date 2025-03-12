@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using System.Text;
 
 namespace TcpGateway.Tests
 {
@@ -47,17 +48,18 @@ namespace TcpGateway.Tests
             // Arrange
             _mockVehicleClient.Setup(vc => vc.ConnectAsync()).ReturnsAsync(true);
             _mockBackendClient.Setup(bc => bc.ConnectAsync()).ReturnsAsync(true);
-            _mockVehicleClient.Setup(bc => bc.SendMessageAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            _mockVehicleClient.Setup(bc => bc.SendMessageAsync(It.IsAny<byte[]>())).Returns(Task.CompletedTask);
 
             var relay = new TcpMessageRelay(_mockVehicleClient.Object, _mockBackendClient.Object, new NullLogger<TcpMessageRelay>());
 
             await relay.StartRelayAsync(); // Ensure relay is running
+            var encodedMessage = Encoding.UTF8.GetBytes("Test Message from Backend");
 
             // Act: Fire the event to simulate a message from the vehicle
-            _mockVehicleClient.Raise(vc => vc.MessageReceived += null, null, "Test Message from Vehicle");
+            _mockVehicleClient.Raise(vc => vc.MessageReceived += null, null, encodedMessage);
 
             // Assert
-            _mockBackendClient.Verify(bc => bc.SendMessageAsync("Test Message from Vehicle"), Times.Once);
+            _mockBackendClient.Verify(bc => bc.SendMessageAsync(encodedMessage), Times.Once);
         }
 
 
@@ -67,17 +69,19 @@ namespace TcpGateway.Tests
             // Arrange
             _mockVehicleClient.Setup(vc => vc.ConnectAsync()).ReturnsAsync(true);
             _mockBackendClient.Setup(bc => bc.ConnectAsync()).ReturnsAsync(true);
-            _mockBackendClient.Setup(bc => bc.SendMessageAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            _mockBackendClient.Setup(bc => bc.SendMessageAsync(It.IsAny<byte[]>())).Returns(Task.CompletedTask);
 
             var relay = new TcpMessageRelay(_mockVehicleClient.Object, _mockBackendClient.Object, new NullLogger<TcpMessageRelay>());
 
             await relay.StartRelayAsync(); // Ensure relay is running
 
+            var encodedMessage = Encoding.UTF8.GetBytes("Test Message from Backend");
+
             // Act: Fire the event to simulate a message from the vehicle
-            _mockBackendClient.Raise(bc => bc.MessageReceived += null, null, "Test Message from Backend");
+            _mockBackendClient.Raise(bc => bc.MessageReceived += null, null, encodedMessage);
 
             // Assert
-            _mockVehicleClient.Verify(vc => vc.SendMessageAsync("Test Message from Backend"), Times.Once);
+            _mockVehicleClient.Verify(vc => vc.SendMessageAsync(encodedMessage), Times.Once);
         }
     }
 

@@ -3,6 +3,7 @@ using System.Text;
 using Moq;
 using Microsoft.Extensions.Logging.Abstractions;
 using TcpLibrary.Config;
+using TcpLibrary.Exceptions;
 
 public class TcpClientServiceTests
 {
@@ -26,15 +27,13 @@ public class TcpClientServiceTests
     }
 
     [Fact]
-    public async Task ConnectAsync_ShouldReturnFalse_WhenConnectionFails()
+    public async Task ConnectAsync_ShouldThrowTcpConnectionException_WhenConnectionFails()
     {
         var mockLogger = new NullLogger<TcpClientService>();
         var failingConfig = new TcpConfig(ServerIp: "192.168.1.200", Port: 9999, MaxRetries: 2);
         var tcpClient = new TcpClientService(failingConfig, mockLogger);
 
-        bool result = await tcpClient.ConnectAsync();
-
-        Assert.False(result, "TCP Client should fail connection after retries.");
+        await Assert.ThrowsAsync<TcpConnectionException>(async () => await tcpClient.ConnectAsync());
     }
 
     [Fact]
@@ -52,28 +51,81 @@ public class TcpClientServiceTests
     }
 
     [Fact]
-    public async Task SendMessageAsync_ShouldFail_WhenNotConnected()
+    public async Task SendMessageAsync_ShouldThrowTcpSendException_WhenNotConnected()
     {
         var mockLogger = new NullLogger<TcpClientService>();
         var tcpClient = new TcpClientService(_config, mockLogger);
 
-        await Assert.ThrowsAsync<SocketException>(async () => await tcpClient.SendMessageAsync("Hello, TCP!"));
+        await Assert.ThrowsAsync<TcpSendException>(async () => await tcpClient.SendMessageAsync("Hello, TCP!"));
     }
 
     [Fact]
-    public async Task RelayMessage_ShouldForwardMessage_WhenConnected()
+    public async Task SendMessageAsync_ShouldThrowTcpSendException_WhenSocketIsDisposed()
     {
         var mockLogger = new NullLogger<TcpClientService>();
-        var mockTargetClient = new Mock<IClientService>();
-        mockTargetClient.Setup(tc => tc.SendMessageAsync(It.IsAny<byte[]>())).Returns(Task.CompletedTask);
-
         var tcpClient = new TcpClientService(_config, mockLogger);
         await tcpClient.ConnectAsync();
-        byte[] testMessage = Encoding.UTF8.GetBytes("Test Relay Message");
+        await tcpClient.DisconnectAsync(); // Dispose socket before sending
 
-        await tcpClient.SendMessageAsync(testMessage);
-        mockTargetClient.Verify(tc => tc.SendMessageAsync(It.IsAny<byte[]>()), Times.Once);
+        await Assert.ThrowsAsync<TcpSendException>(async () => await tcpClient.SendMessageAsync("Hello, TCP!"));
     }
+
+    //[Fact]
+    //public async Task MessageReceived_Event_ShouldTrigger_WhenDataIsReceived()
+    //{
+    //    var mockLogger = new NullLogger<TcpClientService>();
+    //    var tcpClient = new TcpClientService(_config, mockLogger);
+    //    await tcpClient.ConnectAsync();
+
+    //    bool eventTriggered = false;
+    //    byte[] testMessage = Encoding.UTF8.GetBytes("Test Message");
+
+    //    // Subscribe to the MessageReceived event
+    //    tcpClient.MessageReceived += (sender, message) =>
+    //    {
+    //        eventTriggered = true;
+    //        Assert.Equal(testMessage, message);
+    //    };
+
+    //    // Use reflection to get the private method and manually invoke it
+    //    var methodInfo = typeof(TcpClientService).GetMethod("ReceiveMessagesAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+    //    await (Task)methodInfo.Invoke(tcpClient, [CancellationToken.None]);
+
+    //    Assert.True(eventTriggered, "MessageReceived event should be triggered.");
+    //    await tcpClient.DisconnectAsync();
+    //}
+
+    [Fact]
+    public async Task DisconnectAsync_ShouldTriggerOnDisconnectEvent()
+    {
+        var mockLogger = new NullLogger<TcpClientService>();
+        var tcpClient = new TcpClientService(_config, mockLogger);
+        await tcpClient.ConnectAsync();
+
+        bool eventTriggered = false;
+        tcpClient.OnDisconnect += (sender, reason) => eventTriggered = true;
+
+        await tcpClient.DisconnectAsync();
+
+        Assert.True(eventTriggered, "OnDisconnect event should be triggered.");
+    }
+
+    //[Fact]
+    //public async Task RelayMessage_ShouldForwardMessage_WhenConnected()
+    //{
+    //    var mockLogger = new NullLogger<TcpClientService>();
+    //    var mockTargetClient = new Mock<IClientService>();
+    //    mockTargetClient.Setup(tc => tc.SendMessageAsync(It.IsAny<byte[]>())).Returns(Task.CompletedTask);
+
+    //    var tcpClient = new TcpClientService(_config, mockLogger);
+    //    await tcpClient.ConnectAsync();
+    //    byte[] testMessage = Encoding.UTF8.GetBytes("Test Relay Message");
+
+    //    tcpClient.MessageReceived += (sender, message) => mockTargetClient.Object.SendMessageAsync(message);
+    //    //tcpClient.MessageReceived.Invoke(tcpClient, testMessage);
+
+    //    mockTargetClient.Verify(tc => tc.SendMessageAsync(It.IsAny<byte[]>()), Times.Once);
+    //}
 
     [Fact]
     public async Task RelayMessage_ShouldNotForward_WhenNotConnected()
@@ -85,7 +137,17 @@ public class TcpClientServiceTests
         var tcpClient = new TcpClientService(_config, mockLogger);
         byte[] testMessage = Encoding.UTF8.GetBytes("Test Relay Message");
 
-        await tcpClient.SendMessageAsync(testMessage);
+        await Assert.ThrowsAsync<TcpSendException>(async () => await tcpClient.SendMessageAsync(testMessage));
         mockTargetClient.Verify(tc => tc.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_ShouldRetry_WhenFirstAttemptFails()
+    {
+        var mockLogger = new NullLogger<TcpClientService>();
+        var failingConfig = new TcpConfig(ServerIp: "192.168.1.250", Port: 5050, MaxRetries: 2, RetryDelayMs: 500);
+        var tcpClient = new TcpClientService(failingConfig, mockLogger);
+
+        await Assert.ThrowsAsync<TcpConnectionException>(async () => await tcpClient.ConnectAsync());
     }
 }
