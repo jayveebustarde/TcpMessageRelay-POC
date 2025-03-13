@@ -1,21 +1,32 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System.Text;
+using TcpMessageRelay.Clients;
+using TcpMessageRelay.Relay;
 
 namespace TcpGateway.Tests
 {
-    public class TcpMessageRelayTests
+    public class TcpRelayServiceTests
     {
-        private readonly Mock<IClientService> _mockVehicleClient;
-        private readonly Mock<IClientService> _mockBackendClient;
-        private readonly TcpMessageRelay _relay;
+        private readonly Mock<IVehicleClient> _mockVehicleClient;
+        private readonly Mock<IBackendClient> _mockBackendClient;
+        private readonly Mock<IEventHandler<byte[]>> _mockVehicleToBackendHandler;
+        private readonly Mock<IEventHandler<byte[]>> _mockBackendToVehicleHandler;
+        private readonly TcpRelayService _relay;
 
-        public TcpMessageRelayTests()
+        public TcpRelayServiceTests()
         {
-            _mockVehicleClient = new Mock<IClientService>();
-            _mockBackendClient = new Mock<IClientService>();
+            _mockVehicleClient = new Mock<IVehicleClient>();
+            _mockBackendClient = new Mock<IBackendClient>();
+            _mockVehicleToBackendHandler = new Mock<IEventHandler<byte[]>>();
+            _mockBackendToVehicleHandler = new Mock<IEventHandler<byte[]>>();
 
-            _relay = new TcpMessageRelay(_mockVehicleClient.Object, _mockBackendClient.Object, new NullLogger<TcpMessageRelay>());
+            _relay = new TcpRelayService(
+                _mockVehicleClient.Object,
+                _mockBackendClient.Object,
+                _mockVehicleToBackendHandler.Object,
+                _mockBackendToVehicleHandler.Object,
+                new NullLogger<TcpRelayService>());
         }
 
         [Fact]
@@ -50,9 +61,7 @@ namespace TcpGateway.Tests
             _mockBackendClient.Setup(bc => bc.ConnectAsync()).ReturnsAsync(true);
             _mockVehicleClient.Setup(bc => bc.SendMessageAsync(It.IsAny<byte[]>())).Returns(Task.CompletedTask);
 
-            var relay = new TcpMessageRelay(_mockVehicleClient.Object, _mockBackendClient.Object, new NullLogger<TcpMessageRelay>());
-
-            await relay.StartRelayAsync(); // Ensure relay is running
+            await _relay.StartRelayAsync(); // Ensure relay is running
             var encodedMessage = Encoding.UTF8.GetBytes("Test Message from Backend");
 
             // Act: Fire the event to simulate a message from the vehicle
@@ -71,10 +80,7 @@ namespace TcpGateway.Tests
             _mockBackendClient.Setup(bc => bc.ConnectAsync()).ReturnsAsync(true);
             _mockBackendClient.Setup(bc => bc.SendMessageAsync(It.IsAny<byte[]>())).Returns(Task.CompletedTask);
 
-            var relay = new TcpMessageRelay(_mockVehicleClient.Object, _mockBackendClient.Object, new NullLogger<TcpMessageRelay>());
-
-            await relay.StartRelayAsync(); // Ensure relay is running
-
+            await _relay.StartRelayAsync(); // Ensure relay is running
             var encodedMessage = Encoding.UTF8.GetBytes("Test Message from Backend");
 
             // Act: Fire the event to simulate a message from the vehicle
