@@ -17,6 +17,9 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
     private Socket _socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     private CancellationTokenSource? _cts;
 
+    /// <inheritdoc />
+    public bool IsConnected => _socket?.Connected ?? false;
+
     /// <inheritdoc /> 
     public event EventHandler<byte[]>? MessageReceived;
 

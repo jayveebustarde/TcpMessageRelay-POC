@@ -38,4 +38,9 @@ public interface IClientService
     /// <param name="data">The byte array data input.</param>
     /// <returns>Asynchronous task of the action</returns>
     Task SendMessageAsync(byte[] data);
+
+    /// <summary>
+    /// Gets a value indicating whether the client is connected to the server.
+    /// </summary>
+    bool IsConnected { get; }
 }
