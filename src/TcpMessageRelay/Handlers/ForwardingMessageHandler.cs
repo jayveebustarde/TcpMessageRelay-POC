@@ -1,4 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
+using TcpLibrary.Clients;
+
+namespace TcpMessageRelay.Handlers;
 
 public class ForwardingMessageHandler(IClientService targetClient, ILogger<ForwardingMessageHandler> logger) : IEventHandler<byte[]>
 {

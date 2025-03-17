@@ -1,4 +1,6 @@
-﻿/// <summary>
+﻿namespace TcpLibrary.Clients;
+
+/// <summary>
 /// Interface for a client connection service that is not specific to any protocol.
 /// </summary>
 public interface IClientService

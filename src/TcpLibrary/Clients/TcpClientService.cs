@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 using TcpLibrary.Config;
 using TcpLibrary.Exceptions;
 
+namespace TcpLibrary.Clients;
+
 /// <summary>
 /// Initializes a new instance of the <see cref="TcpClientService"/> class.
 /// </summary>
@@ -34,7 +36,7 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
         {
             try
             {
-                _logger.LogInformation($"Attempt {attempt}: Connecting to {_config.ServerIp}:{_config.Port}...");
+                _logger.LogInformation("Attempt {attempt}: Connecting to {serverIp}:{port}...", attempt, _config.ServerIp, _config.Port);
                 await _socket.ConnectAsync(new IPEndPoint(IPAddress.Parse(_config.ServerIp), _config.Port));
                 _logger.LogInformation("Connected to server.");
                 _ = ReceiveMessagesAsync(_cts.Token);
@@ -42,7 +44,7 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
             }
             catch (SocketException ex)
             {
-                _logger.LogError($"[SocketException] Connection attempt {attempt} failed: {ex.Message}");
+                _logger.LogError("[SocketException] Connection attempt {attempt} failed: {exMessage}", attempt, ex.Message);
                 if (attempt == _config.MaxRetries)
                     throw new TcpConnectionException("Failed to connect after max retries.", ex);
             }
@@ -58,7 +60,7 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
             }
             catch (Exception ex)
             {
-                _logger.LogError($"[Unexpected Exception] Connection failed: {ex.Message}");
+                _logger.LogError("[Unexpected Exception] Connection failed: {exMessage}", ex.Message);
                 throw new TcpConnectionException("Unexpected error occurred during connection.", ex);
             }
             
@@ -85,7 +87,7 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
         }
         catch (SocketException ex)
         {
-            _logger.LogError($"[SocketException] Error during disconnect: {ex.Message}");
+            _logger.LogError("[SocketException] Error during disconnect: {exMessage}", ex.Message);
             throw new TcpClientException("Error while disconnecting.", ex);
         }
         catch (ObjectDisposedException)
@@ -94,7 +96,7 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
         }
         catch (Exception ex)
         {
-            _logger.LogError($"[Unexpected Exception] Error during disconnect: {ex.Message}");
+            _logger.LogError("[Unexpected Exception] Error during disconnect: {exMessage}", ex.Message);
         }
     }
 
@@ -120,7 +122,7 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
             Buffer.BlockCopy(data, 0, fullMessage, lengthPrefix.Length, data.Length);
 
             await _socket.SendAsync(new ArraySegment<byte>(fullMessage), SocketFlags.None);
-            _logger.LogInformation($"Sent {data.Length} bytes.");
+            _logger.LogInformation("Sent {length} bytes.", data.Length);
         }
         catch (SocketException ex)
         {
@@ -173,7 +175,7 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
             }
             catch (SocketException ex)
             {
-                _logger.LogError($"[SocketException] Receive error: {ex.Message}");
+                _logger.LogError("[SocketException] Receive error: {exMessage}", ex.Message);
                 break; // Exit the loop on connection failure
             }
             catch (ObjectDisposedException)
@@ -188,7 +190,7 @@ public class TcpClientService(TcpConfig config, ILogger<TcpClientService> logger
             }
             catch (Exception ex)
             {
-                _logger.LogError($"[Unexpected Exception] Receive failed: {ex.Message}");
+                _logger.LogError("[Unexpected Exception] Receive failed: {exMessage}", ex.Message);
                 break;
             }
         }

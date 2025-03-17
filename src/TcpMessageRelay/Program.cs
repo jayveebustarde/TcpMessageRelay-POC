@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TcpLibrary.Clients;
 using TcpLibrary.Config;
 using TcpMessageRelay.Clients;
+using TcpMessageRelay.Handlers;
 using TcpMessageRelay.Relay;
 
 class Program
