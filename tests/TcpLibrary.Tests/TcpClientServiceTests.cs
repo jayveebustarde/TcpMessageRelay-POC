@@ -5,6 +5,8 @@ using TcpLibrary.Config;
 using TcpLibrary.Exceptions;
 using TcpLibrary.Clients;
 
+namespace TcpLibrary.Tests;
+
 public class TcpClientServiceTests
 {
     private readonly TcpConfig _config = new(
